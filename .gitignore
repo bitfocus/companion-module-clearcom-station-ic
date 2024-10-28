@@ -7,3 +7,4 @@ DEBUG-*
 /.yarn
 .vscode
 .DS_Store
+companion-module-clearcom-station-ic.code-workspace

@@ -1,3 +1,5 @@
-## Your module
+## Clear-Com Station-IC Module
 
-Write some help for your users here!
+Uses the Clear-Com Station-IC API to communicate with the Station-IC application for Windows and MacOS.
+
+_Andrew Broughton, Oct 2024_
