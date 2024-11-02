@@ -1,5 +1,5 @@
 import type { ModuleInstance } from './main.js'
-import { StationICMessage } from './parseMessage.js'
+import { StationICMessage } from './message.js'
 
 export function UpdateActions(self: ModuleInstance): void {
 	self.setActionDefinitions({
