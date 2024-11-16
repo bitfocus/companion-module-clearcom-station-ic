@@ -20,7 +20,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 					max: 10,
 				},
 			],
-			callback: (feedback) => {
+			callback: async (feedback): Promise<boolean> => {
 				console.log('Hello world!', feedback.options.num)
 				if (Number(feedback.options.num) > 5) {
 					return true

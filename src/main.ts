@@ -4,13 +4,13 @@ import { UpdateVariableDefinitions } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
 import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
-import { ParseMessage } from './message.js'
+import { ParseMessage } from './messages.js'
 
 export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	config!: ModuleConfig // Setup in init()
 	ws!: WebSocket
-	labelMap!: Map<number, string>
-	keysetVolumeMap!: Map<number, number>
+	// labelMap!: Map<number, string>
+	// keysetVolumeMap!: Map<number, number>
 
 	constructor(internal: unknown) {
 		super(internal)
@@ -18,8 +18,8 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 
 	async init(config: ModuleConfig): Promise<void> {
 		this.config = config
-		this.labelMap = new Map<number, string>()
-		this.keysetVolumeMap = new Map<number, number>()
+		// this.labelMap = new Map<number, string>()
+		// this.keysetVolumeMap = new Map<number, number>()
 
 		this.updateStatus(InstanceStatus.Connecting)
 		this.initWebSocket()
@@ -48,10 +48,11 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	}
 
 	initWebSocket(): void {
-		if (this.ws?.readyState == WebSocket.OPEN) {
+		if (this.ws && this.ws.readyState != WebSocket.CLOSED) {
 			this.ws.close(1000)
 			this.updateStatus(InstanceStatus.Disconnected)
 		}
+
 		this.ws = new WebSocket(`ws://${this.config.host}:16000`)
 
 		this.ws.addEventListener('error', (event) => {

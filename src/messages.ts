@@ -9,6 +9,7 @@ interface IStationICMessage {
 	status?: 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED'
 	keysetId?: number
 	keysetIds?: ILabel[]
+	label?: string
 	key?: 'MAIN' | 'CLEAR' | 'PRIMARY_RIGHT' | 'PRIMARY_LEFT' | 'SECONDARY_RIGHT' | 'SECONDARY_LEFT'
 	action?: 'PRESS+RELEASE' | 'HOLD' | 'RELEASE'
 	isMuted?: boolean
@@ -24,13 +25,12 @@ interface ILabel {
 }
 
 export class StationICMessage {
-	instance!: ModuleInstance
 	data: IStationICMessage = { type: 'CONNECTION' }
 
-	constructor(self: ModuleInstance, newMsg: string = '') {
-		this.instance = self
+	constructor(newMsg: string = '') {
 		if (newMsg != '') {
 			try {
+				console.log('WS Message   ', newMsg)
 				this.data = JSON.parse(newMsg)
 				console.log('WS Parsed:   ', this.data)
 			} catch (e) {
@@ -39,9 +39,11 @@ export class StationICMessage {
 		}
 	}
 
-	send(): void {
+	send(ws: WebSocket): void {
 		try {
-			this.instance.ws.send(JSON.stringify(this.data))
+			const JSONString = JSON.stringify(this.data)
+			console.log('WS Sending:  ', JSONString)
+			ws.send(JSONString)
 		} catch (e) {
 			console.log('Error: ', e, 'Cannot send: ', this.data)
 		}
@@ -49,30 +51,40 @@ export class StationICMessage {
 }
 
 export function ParseMessage(self: ModuleInstance, msg: string): void {
-	const data = new StationICMessage(self, msg).data
+	const data = new StationICMessage(msg).data
 	switch (data.type) {
 		case 'CONNECTION': {
-			console.log('CONNECTION status = ', data.status)
 			self.setVariableValues({ CONNECTION: data.status })
 			break
 		}
-		case 'KEYSET_VOLUME': {
-			console.log(`KEYSET VOLUME #${data.keysetId} = ${data.currentVolume}`)
-			CreateVariable(self, `KS_${data.keysetId}_VOL`, data.currentVolume)
-			break
-		}
+
 		case 'LABELS_MAPPING': {
 			for (const lm of data.keysetIds!) {
-				console.log(`KEYSET #${lm.id} = ${lm.label}`)
-				CreateVariable(self, `KS_${lm.id}_LABEL`, lm.label)
+				CreateVariable(self, `KS_${lm.id}_LABEL`, lm.label?.trim())
 			}
 			break
 		}
+
+		case 'GBL_TALK':
+		case 'GBL_LISTEN': {
+			CreateVariable(self, `${data.type}_MUTED`, data.isMuted)
+			break
+		}
+
+		case 'REPLY_KEYSET': {
+			CreateVariable(self, `RK_ACTIVE`, data.isActive)
+			CreateVariable(self, `RK_FLASHING`, data.isFlashing)
+			break
+		}
+
+		case 'KEYSET_VOLUME': {
+			CreateVariable(self, `KS_${data.keysetId}_VOL`, data.currentVolume)
+			break
+		}
+
 		case 'MAIN_KEYSET': {
-			console.log(
-				`KEYSET BUTTON #${data.keysetId} ${data.key} ${data.isActive ? 'ACTIVE' : ''} ${data.isFlashing ? ', FLASHING' : ''}`,
-			)
 			CreateVariable(self, `KS_${data.keysetId}_${data.key}_ACTIVE`, data.isActive)
+			CreateVariable(self, `KS_${data.keysetId}_${data.key}_FLASHING`, data.isFlashing)
 			break
 		}
 	}
