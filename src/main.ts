@@ -4,13 +4,12 @@ import { UpdateVariableDefinitions } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
 import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
-import { ParseMessage } from './messages.js'
+import { ParseMessage, keyDef } from './messages.js'
 
 export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	config!: ModuleConfig // Setup in init()
 	ws!: WebSocket
-	// labelMap!: Map<number, string>
-	// keysetVolumeMap!: Map<number, number>
+	reconnectTimer!: NodeJS.Timeout
 
 	constructor(internal: unknown) {
 		super(internal)
@@ -18,21 +17,16 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 
 	async init(config: ModuleConfig): Promise<void> {
 		this.config = config
-		// this.labelMap = new Map<number, string>()
-		// this.keysetVolumeMap = new Map<number, number>()
-
-		this.updateStatus(InstanceStatus.Connecting)
 		this.initWebSocket()
-
-		this.updateActions() // export actions
-		this.updateFeedbacks() // export feedbacks
-		this.updateVariableDefinitions() // export variable definitions
+		UpdateVariableDefinitions(this) // export variable definitions
 	}
 	// When module gets deleted
 	async destroy(): Promise<void> {
-		console.log('WS readyState: ', this.ws.readyState)
-		if (this.ws.readyState == WebSocket.OPEN) {
-			this.ws.close()
+		if (this.ws) {
+			console.log('Destroying WS.\nWS readyState= ', this.ws.readyState)
+			if (this.ws.readyState != WebSocket.CLOSED) {
+				this.ws.close()
+			}
 		}
 		this.log('debug', 'destroy')
 	}
@@ -48,7 +42,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	}
 
 	initWebSocket(): void {
-		if (this.ws && this.ws.readyState != WebSocket.CLOSED) {
+		if (this.ws && this.ws.readyState == WebSocket.OPEN) {
 			this.ws.close(1000)
 			this.updateStatus(InstanceStatus.Disconnected)
 		}
@@ -61,38 +55,35 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			if (this.ws?.readyState == WebSocket.OPEN) {
 				this.ws.close()
 			}
+			this.reconnectTimer = setTimeout(() => this.initWebSocket(), 1000)
 		})
 
 		this.ws.addEventListener('open', () => {
 			console.log('WS Open.')
 			this.updateStatus(InstanceStatus.Ok)
+			clearTimeout(this.reconnectTimer)
 		})
 
 		this.ws.addEventListener('closed', (event) => {
 			console.log('WS Closed. Msg: ', event)
 			this.updateStatus(InstanceStatus.Disconnected)
+			clearTimeout(this.reconnectTimer)
+			this.reconnectTimer = setTimeout(() => this.initWebSocket(), 1000)
 		})
 
 		this.ws.addEventListener('message', (event) => {
 			try {
-				console.log('WS Received: ', JSON.parse(event.data))
+				console.log('WS Received: ', JSON.stringify(JSON.parse(event.data), null, 2))
 				ParseMessage(this, event.data)
+				if (keyDef) {
+					// Wait until Stn-IC responds with KeySet Mapping
+					UpdateActions(this)
+					UpdateFeedbacks(this)
+				}
 			} catch (e) {
 				console.log('Parse Error: ', e, 'Unrecognized message: ', event.data)
 			}
 		})
-	}
-
-	updateActions(): void {
-		UpdateActions(this)
-	}
-
-	updateFeedbacks(): void {
-		UpdateFeedbacks(this)
-	}
-
-	updateVariableDefinitions(): void {
-		UpdateVariableDefinitions(this)
 	}
 }
 

@@ -1,5 +1,5 @@
 ## Clear-Com Station-IC Module
 
-Uses the Clear-Com API to communicate with the Station-IC application for Windows and MacOS.
+Companion Module for Clear-Com's Station-IC app that runs on Windows and MacOS desktops.
 
-_Andrew Broughton, Nov 2024_
+_Andrew Broughton, Jan 2025_

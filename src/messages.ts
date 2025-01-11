@@ -1,16 +1,27 @@
+import { InstanceStatus } from '@companion-module/base'
 import type { ModuleInstance } from './main.js'
 import { CreateVariable } from './variables.js'
 
+export type msgTypes =
+	| 'CONNECTION'
+	| 'LABELS_MAPPING'
+	| 'GBL_TALK'
+	| 'GBL_LISTEN'
+	| 'REPLY_KEYSET'
+	| 'KEYSET_VOLUME'
+	| 'MAIN_KEYSET'
 export type actionTypes = 'PRESS+RELEASE' | 'HOLD' | 'RELEASE'
+export type keyTypes = 'MAIN' | 'CLEAR' | 'PRIMARY_RIGHT' | 'PRIMARY_LEFT' | 'SECONDARY_RIGHT' | 'SECONDARY_LEFT'
+export type keyFunctions = 'TALK' | 'LISTEN' | 'CALL' | 'RMK' | 'EVENT1' | 'EVENT2'
 
 interface IStationICMessage {
 	apiKey?: string
-	type: 'CONNECTION' | 'LABELS_MAPPING' | 'GBL_TALK' | 'GBL_LISTEN' | 'REPLY_KEYSET' | 'KEYSET_VOLUME' | 'MAIN_KEYSET'
+	type: msgTypes
 	status?: 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED'
 	keysetId?: number
 	keysetIds?: ILabel[]
 	label?: string
-	key?: 'MAIN' | 'CLEAR' | 'PRIMARY_RIGHT' | 'PRIMARY_LEFT' | 'SECONDARY_RIGHT' | 'SECONDARY_LEFT'
+	key?: keyTypes
 	action?: 'PRESS+RELEASE' | 'HOLD' | 'RELEASE'
 	isMuted?: boolean
 	isActive?: boolean
@@ -22,7 +33,26 @@ interface IStationICMessage {
 interface ILabel {
 	label: string
 	id: number
+	keys: IKeyMap[]
 }
+
+interface IKeyMap {
+	key: keyTypes
+	function: keyFunctions
+}
+
+export interface IKeyStatus {
+	label?: string
+	muted?: boolean
+	isActive?: boolean
+	isFlashing?: boolean
+}
+
+export const keyFuncArray: keyFunctions[] = ['TALK', 'LISTEN', 'CALL', 'RMK', 'EVENT1', 'EVENT2']
+export let keyDef: IStationICMessage
+export const globalStatus: Map<msgTypes, IKeyStatus> = new Map()
+export const keyVolume: Map<number, number> = new Map()
+export const keyStatus: Map<number, Map<keyTypes, IKeyStatus>> = new Map()
 
 export class StationICMessage {
 	data: IStationICMessage = { type: 'CONNECTION' }
@@ -30,9 +60,7 @@ export class StationICMessage {
 	constructor(newMsg: string = '') {
 		if (newMsg != '') {
 			try {
-				console.log('WS Message   ', newMsg)
 				this.data = JSON.parse(newMsg)
-				console.log('WS Parsed:   ', this.data)
 			} catch (e) {
 				console.log('Error: ', e, 'WS: Unrecognized message. ', newMsg)
 			}
@@ -55,36 +83,64 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 	switch (data.type) {
 		case 'CONNECTION': {
 			self.setVariableValues({ CONNECTION: data.status })
+			switch (data.status) {
+				case 'DISCONNECTED':
+					self.updateStatus(InstanceStatus.Disconnected)
+					break
+				case 'CONNECTED':
+					self.updateStatus(InstanceStatus.Ok)
+					break
+				case 'CONNECTING':
+					self.updateStatus(InstanceStatus.Connecting)
+			}
 			break
 		}
 
 		case 'LABELS_MAPPING': {
+			keyDef = data
 			for (const lm of data.keysetIds!) {
 				CreateVariable(self, `KS_${lm.id}_LABEL`, lm.label?.trim())
+				/*
+				for (const kn of lm.keys!) {
+					if (kn?.key && kn?.function) {
+						CreateVariable(self, `KS_${lm.id}_${kn.key}`, kn.function?.trim())
+					}
+				}
+*/
 			}
+			break
+		}
+
+		case 'REPLY_KEYSET': {
+			globalStatus.set(data.type, { label: data.label, isActive: data.isActive!, isFlashing: data.isFlashing })
+			CreateVariable(self, `RK_ACTIVE`, data.isActive)
+			CreateVariable(self, `RK_FLASHING`, data.isFlashing)
+			CreateVariable(self, `RK_LABEL`, data.label)
+			self.checkFeedbacks('reply_state')
 			break
 		}
 
 		case 'GBL_TALK':
 		case 'GBL_LISTEN': {
+			globalStatus.set(data.type, { muted: data.isMuted! })
 			CreateVariable(self, `${data.type}_MUTED`, data.isMuted)
-			break
-		}
-
-		case 'REPLY_KEYSET': {
-			CreateVariable(self, `RK_ACTIVE`, data.isActive)
-			CreateVariable(self, `RK_FLASHING`, data.isFlashing)
+			self.checkFeedbacks('global_state')
 			break
 		}
 
 		case 'KEYSET_VOLUME': {
+			keyVolume.set(data.keysetId!, data.currentVolume!)
 			CreateVariable(self, `KS_${data.keysetId}_VOL`, data.currentVolume)
 			break
 		}
 
 		case 'MAIN_KEYSET': {
+			const keyData = keyStatus.get(data.keysetId!) || new Map<keyTypes, IKeyStatus>()
+			keyData?.set(data.key!, { isActive: data.isActive!, isFlashing: data.isFlashing! })
+			keyStatus.set(data.keysetId!, keyData)
 			CreateVariable(self, `KS_${data.keysetId}_${data.key}_ACTIVE`, data.isActive)
 			CreateVariable(self, `KS_${data.keysetId}_${data.key}_FLASHING`, data.isFlashing)
+			self.checkFeedbacks('button_state')
 			break
 		}
 	}

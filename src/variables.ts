@@ -1,10 +1,14 @@
 import type { ModuleInstance } from './main.js'
 import { CompanionVariableDefinition } from '@companion-module/base'
 
-const variables: CompanionVariableDefinition[] = [{ variableId: 'CONNECTION', name: 'Connection Status' }]
+const variables: CompanionVariableDefinition[] = [
+	{ variableId: 'CONNECTION', name: 'Connection Status' },
+	{ variableId: 'RK_LABEL', name: 'Reply Key Label' },
+]
 
 export function UpdateVariableDefinitions(self: ModuleInstance): void {
 	self.setVariableDefinitions(variables)
+	self.setVariableValues({ CONNECTION: 'DISCONNECTED' })
 }
 
 export function CreateVariable(
@@ -12,8 +16,6 @@ export function CreateVariable(
 	varName: string,
 	data: number | string | boolean | undefined,
 ): void {
-	// Auto-create a variable
-
 	// Add new Auto-created variable and value
 	const varToAdd = { variableId: varName, name: 'Auto-Created Variable' }
 	const curVarVal = self.getVariableValue(varName)

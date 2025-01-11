@@ -1,9 +1,23 @@
 import type { ModuleInstance } from './main.js'
-import { StationICMessage } from './messages.js'
+import { StationICMessage, keyDef, keyFuncArray } from './messages.js'
+import { DropdownChoice } from '@companion-module/base'
+
+export const keySetChoices: DropdownChoice[] = []
+export const keyChoices: DropdownChoice[] = []
 
 export function UpdateActions(self: ModuleInstance): void {
 	const maxVol = 15
-	const maxKS = 23
+	if (keySetChoices.length == 0) {
+		for (const ks of keyDef.keysetIds!) {
+			keySetChoices.push({ id: ks.id.toString(), label: ks.label })
+		}
+	}
+	if (keyChoices.length == 0) {
+		for (const id of keyFuncArray) {
+			const prettyId = `${id.charAt(0).toUpperCase()}${id.slice(1).toLowerCase()}`
+			keyChoices.push({ id: id, label: prettyId })
+		}
+	}
 
 	self.setActionDefinitions({
 		key_press: {
@@ -11,24 +25,18 @@ export function UpdateActions(self: ModuleInstance): void {
 			description: 'Press or Release a Key',
 			options: [
 				{
-					id: 'keysetId',
-					type: 'number',
-					label: 'KeySet #',
+					id: 'keySet',
+					type: 'dropdown',
+					label: 'KeySet',
+					choices: keySetChoices,
 					default: 0,
-					min: 0,
-					max: maxKS,
 				},
 				{
-					id: 'key',
+					id: 'function',
 					type: 'dropdown',
-					label: 'Key',
-					choices: [
-						{ id: 'PRIMARY_LEFT', label: 'PRIMARY LEFT' },
-						{ id: 'PRIMARY_RIGHT', label: 'PRIMARY RIGHT' },
-						{ id: 'SECONDARY_LEFT', label: 'SECONDARY LEFT' },
-						{ id: 'SECONDARY_RIGHT', label: 'SECONDARY RIGHT' },
-					],
-					default: 'PRIMARY_RIGHT',
+					label: 'Function',
+					choices: keyChoices,
+					default: keyChoices[0]?.id,
 				},
 				{
 					id: 'action',
@@ -43,11 +51,13 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: async (event): Promise<void> => {
+				const ksId = keyDef.keysetIds![Number(event.options.keySet)].id
+				const key = keyDef.keysetIds![ksId].keys.find((k) => k.function == event.options.function)?.key
 				const msg = `{
 					"type": "MAIN_KEYSET",
 					"apiKey": "xxx",
-					"keysetId": ${event.options.keysetId},
-					"key": "${event.options.key}",
+					"keysetId": ${ksId},
+					"key": "${key}",
 					"action": "${event.options.action}"
 				}`
 				const stnMsg = new StationICMessage(msg)
@@ -60,12 +70,11 @@ export function UpdateActions(self: ModuleInstance): void {
 			description: 'Set the Volume for a Keyset',
 			options: [
 				{
-					id: 'keysetId',
-					type: 'number',
-					label: 'KeySet #',
+					id: 'keySet',
+					type: 'dropdown',
+					label: 'KeySet',
+					choices: keySetChoices,
 					default: 0,
-					min: 0,
-					max: maxKS,
 				},
 				{
 					id: 'volValue',
@@ -94,15 +103,25 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: async (event): Promise<void> => {
-				let vol = event.options.relative
-					? Number(self.getVariableValue(`KS_${event.options.keysetId}_VOL`)) + Number(event.options.volRel)
-					: Number(event.options.volValue)
+				const curVol = self.getVariableValue(`KS_${event.options.keysetId}_VOL`)
+				let vol = 0
+				if (event.options.relative) {
+					if (curVol) {
+						vol = Number(curVol) + Number(event.options.volRel)
+					} else {
+						self.log('warn', 'Cannot set relative volume - have not received current volume from Station-IC.')
+						return
+					}
+				} else {
+					vol = Number(event.options.volValue)
+				}
+				if (isNaN(vol)) return
 				vol = Math.min(Math.max(vol, 0), maxVol)
-				console.log(event.options, Number(self.getVariableValue(`KS_${event.options.keysetId}_VOL`)), vol)
+				const ksId = keyDef.keysetIds![Number(event.options.keySet)].id
 				const msg = `{
 					"type": "KEYSET_VOLUME",
 					"apiKey": "xxx",
-					"keysetId": ${event.options.keysetId},
+					"keysetId": ${ksId},
 					"volValue": ${vol}
 				}`
 				const stnMsg = new StationICMessage(msg)
@@ -112,7 +131,7 @@ export function UpdateActions(self: ModuleInstance): void {
 
 		reply: {
 			name: 'Reply',
-			description: 'Toggle Reply Key',
+			description: 'Press Reply Key',
 			options: [
 				{
 					id: 'action',
