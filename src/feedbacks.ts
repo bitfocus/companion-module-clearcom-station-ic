@@ -46,7 +46,6 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				} else {
 					status = !!ks?.isFlashing
 				}
-
 				return status
 			},
 		},

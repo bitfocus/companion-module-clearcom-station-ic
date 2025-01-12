@@ -56,7 +56,6 @@ export const keyStatus: Map<number, Map<keyTypes, IKeyStatus>> = new Map()
 
 export class StationICMessage {
 	data: IStationICMessage = { type: 'CONNECTION' }
-
 	constructor(newMsg: string = '') {
 		if (newMsg != '') {
 			try {
@@ -106,7 +105,7 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 						CreateVariable(self, `KS_${lm.id}_${kn.key}`, kn.function?.trim())
 					}
 				}
-*/
+				*/
 			}
 			break
 		}
@@ -138,10 +137,20 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			const keyData = keyStatus.get(data.keysetId!) || new Map<keyTypes, IKeyStatus>()
 			keyData?.set(data.key!, { isActive: data.isActive!, isFlashing: data.isFlashing! })
 			keyStatus.set(data.keysetId!, keyData)
-			CreateVariable(self, `KS_${data.keysetId}_${data.key}_ACTIVE`, data.isActive)
-			CreateVariable(self, `KS_${data.keysetId}_${data.key}_FLASHING`, data.isFlashing)
+			const kName = keyName(data.keysetId, data.key)
+			CreateVariable(self, `KS_${data.keysetId}_${kName}_ACTIVE`, data.isActive)
+			CreateVariable(self, `KS_${data.keysetId}_${kName}_FLASHING`, data.isFlashing)
 			self.checkFeedbacks('button_state')
 			break
 		}
 	}
+}
+
+function keyName(id: number | undefined, key: string | undefined): string {
+	let kName = ''
+	if (id !== undefined && key !== undefined) {
+		const kData = keyDef.keysetIds![id].keys.find((k) => k.key == key)!
+		kName = kData.function || ''
+	}
+	return kName
 }

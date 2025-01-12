@@ -41,11 +41,11 @@ export function UpdateActions(self: ModuleInstance): void {
 				{
 					id: 'action',
 					type: 'dropdown',
-					label: 'Mode',
+					label: 'Action',
 					choices: [
-						{ id: 'HOLD', label: 'HOLD' },
-						{ id: 'RELEASE', label: 'RELEASE' },
-						{ id: 'PRESS+RELEASE', label: 'TOGGLE' },
+						{ id: 'HOLD', label: 'Hold' },
+						{ id: 'RELEASE', label: 'Release' },
+						{ id: 'PRESS+RELEASE', label: 'Press+Release' },
 					],
 					default: 'PRESS+RELEASE',
 				},
@@ -130,16 +130,16 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 
 		reply: {
-			name: 'Reply',
-			description: 'Press Reply Key',
+			name: 'Reply Key Press',
+			description: 'Press or Release the Reply Key',
 			options: [
 				{
 					id: 'action',
 					type: 'dropdown',
-					label: 'mode',
+					label: 'Action',
 					choices: [
-						{ id: 'HOLD', label: 'HOLD' },
-						{ id: 'RELEASE', label: 'RELEASE' },
+						{ id: 'HOLD', label: 'Hold' },
+						{ id: 'RELEASE', label: 'Release' },
 					],
 					default: 'HOLD',
 				},
@@ -157,8 +157,8 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 
 		global_talk: {
-			name: 'Global Talk',
-			description: 'Toggle Global Talk',
+			name: 'Global Talk Mute',
+			description: 'Toggle Global Talk Mute state',
 			options: [],
 			callback: async (): Promise<void> => {
 				const msg = `{
@@ -172,8 +172,8 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 
 		global_listen: {
-			name: 'Global Listen',
-			description: 'Toggle Global Listen',
+			name: 'Global Listen Mute',
+			description: 'Toggle Global Listen Mute state',
 			options: [],
 			callback: async (): Promise<void> => {
 				const msg = `{
