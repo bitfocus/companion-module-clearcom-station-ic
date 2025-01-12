@@ -49,7 +49,7 @@ export interface IKeyStatus {
 }
 
 export const keyFuncArray: keyFunctions[] = ['TALK', 'LISTEN', 'CALL', 'RMK', 'EVENT1', 'EVENT2']
-export let keyDef: IStationICMessage
+export let keyDef: IStationICMessage = { type: 'LABELS_MAPPING' }
 export const globalStatus: Map<msgTypes, IKeyStatus> = new Map()
 export const keyVolume: Map<number, number> = new Map()
 export const keyStatus: Map<number, Map<keyTypes, IKeyStatus>> = new Map()
