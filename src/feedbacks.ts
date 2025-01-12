@@ -40,7 +40,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				let status = false
 				const ksId = keyDef.keysetIds![Number(event.options.keySet)].id
 				const key = keyDef.keysetIds![ksId].keys.find((k) => k.function == event.options.function)?.key
-				const ks: IKeyStatus | undefined = keyStatus.get(ksId)?.get(key!)
+				const ks = keyStatus.get(ksId)?.get(key!)
 				if (event.options.state == 'ACTIVE') {
 					status = !!ks?.isActive
 				} else {
