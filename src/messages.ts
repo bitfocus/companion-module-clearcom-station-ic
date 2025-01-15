@@ -1,6 +1,8 @@
 import { InstanceStatus } from '@companion-module/base'
 import type { ModuleInstance } from './main.js'
 import { CreateVariable } from './variables.js'
+import { UpdateActions } from './actions.js'
+import { UpdateFeedbacks } from './feedbacks.js'
 
 export type msgTypes =
 	| 'CONNECTION'
@@ -48,8 +50,20 @@ export interface IKeyStatus {
 	isFlashing?: boolean
 }
 
+export const maxKeySets = 24
+
+function createBlankKeyDef(): IStationICMessage {
+	const ksID = []
+	for (let i = 0; i < maxKeySets; i++) {
+		ksID.push({ label: i.toString(), id: i, keys: [] })
+	}
+	return {
+		type: 'LABELS_MAPPING',
+		keysetIds: ksID,
+	}
+}
+export let keyDef: IStationICMessage = createBlankKeyDef()
 export const keyFuncArray: keyFunctions[] = ['TALK', 'LISTEN', 'CALL', 'RMK', 'EVENT1', 'EVENT2']
-export let keyDef: IStationICMessage = { type: 'LABELS_MAPPING' }
 export const globalStatus: Map<msgTypes, IKeyStatus> = new Map()
 export const keyVolume: Map<number, number> = new Map()
 export const keyStatus: Map<number, Map<keyTypes, IKeyStatus>> = new Map()
@@ -67,12 +81,14 @@ export class StationICMessage {
 	}
 
 	send(ws: WebSocket): void {
-		try {
-			const JSONString = JSON.stringify(this.data)
-			console.log('WS Sending:  ', JSONString)
-			ws.send(JSONString)
-		} catch (e) {
-			console.log('Error: ', e, 'Cannot send: ', this.data)
+		if (ws.readyState === ws.OPEN) {
+			try {
+				const JSONString = JSON.stringify(this.data)
+				console.log('WS Sending:  ', JSONString)
+				ws.send(JSONString)
+			} catch (e) {
+				console.log('Error: ', e, 'Cannot send: ', this.data)
+			}
 		}
 	}
 }
@@ -107,6 +123,8 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 				}
 				*/
 			}
+			UpdateActions(self)
+			UpdateFeedbacks(self)
 			break
 		}
 
@@ -138,9 +156,11 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			keyData?.set(data.key!, { isActive: data.isActive!, isFlashing: data.isFlashing! })
 			keyStatus.set(data.keysetId!, keyData)
 			const kName = keyName(data.keysetId, data.key)
-			CreateVariable(self, `KS_${data.keysetId}_${kName}_ACTIVE`, data.isActive)
-			CreateVariable(self, `KS_${data.keysetId}_${kName}_FLASHING`, data.isFlashing)
-			self.checkFeedbacks('button_state')
+			if (kName !== '') {
+				CreateVariable(self, `KS_${data.keysetId}_${kName}_ACTIVE`, data.isActive)
+				CreateVariable(self, `KS_${data.keysetId}_${kName}_FLASHING`, data.isFlashing)
+				self.checkFeedbacks('button_state')
+			}
 			break
 		}
 	}

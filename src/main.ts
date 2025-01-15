@@ -1,15 +1,18 @@
 import { InstanceBase, runEntrypoint, InstanceStatus, SomeCompanionConfigField } from '@companion-module/base'
 import { GetConfigFields, type ModuleConfig } from './config.js'
-import { UpdateVariableDefinitions } from './variables.js'
+import { UpdateVariableDefinitions, getVolumes } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
 import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
-import { ParseMessage, keyDef } from './messages.js'
+import { ParseMessage } from './messages.js'
 
 export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	config!: ModuleConfig // Setup in init()
 	ws!: WebSocket
 	reconnectTimer!: NodeJS.Timeout
+	maxKeySets: number = 24
+	maxVol: number = 15
+	apiKey: string = 'xxx'
 
 	constructor(internal: unknown) {
 		super(internal)
@@ -17,8 +20,11 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 
 	async init(config: ModuleConfig): Promise<void> {
 		this.config = config
+		this.apiKey = this.config.apikey
 		this.initWebSocket()
 		UpdateVariableDefinitions(this) // export variable definitions
+		UpdateActions(this)
+		UpdateFeedbacks(this)
 	}
 	// When module gets deleted
 	async destroy(): Promise<void> {
@@ -33,6 +39,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 
 	async configUpdated(config: ModuleConfig): Promise<void> {
 		this.config = config
+		this.apiKey = this.config.apikey
 		this.initWebSocket()
 	}
 
@@ -47,7 +54,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			this.updateStatus(InstanceStatus.Disconnected)
 		}
 
-		this.ws = new WebSocket(`ws://${this.config.host}:16000`)
+		this.ws = new WebSocket(`ws://${this.config.host}:${this.config.port}`)
 
 		this.ws.addEventListener('error', (event) => {
 			console.log('WS Error: ', event.message)
@@ -62,6 +69,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			console.log('WS Open.')
 			this.updateStatus(InstanceStatus.Ok)
 			clearTimeout(this.reconnectTimer)
+			getVolumes(this)
 		})
 
 		this.ws.addEventListener('closed', (event) => {
@@ -75,11 +83,6 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			try {
 				console.log('WS Received: ', JSON.stringify(JSON.parse(event.data), null, 2))
 				ParseMessage(this, event.data)
-				if (keyDef) {
-					// Wait until Stn-IC responds with KeySet Mapping
-					UpdateActions(this)
-					UpdateFeedbacks(this)
-				}
 			} catch (e) {
 				console.log('Parse Error: ', e, 'Unrecognized message: ', event.data)
 			}

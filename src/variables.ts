@@ -1,4 +1,5 @@
 import type { ModuleInstance } from './main.js'
+import { StationICMessage } from './messages.js'
 import { CompanionVariableDefinition } from '@companion-module/base'
 
 const variables: CompanionVariableDefinition[] = [
@@ -22,4 +23,16 @@ export function CreateVariable(
 	if (curVarVal === undefined) variables.push(varToAdd) // if Variable doesn't exist, add it
 	self.setVariableDefinitions(variables)
 	self.setVariableValues({ [varName]: data })
+}
+
+export function getVolumes(self: ModuleInstance): void {
+	for (let i = 0; i < self.maxKeySets; i++) {
+		const msg = `{
+			"type": "KEYSET_VOLUME",
+			"apiKey": "${self.apiKey}",
+			"keysetId": ${i}
+		}`
+		const stnMsg = new StationICMessage(msg)
+		stnMsg.send(self.ws) // Request current volume
+	}
 }

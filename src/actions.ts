@@ -6,12 +6,13 @@ export const keySetChoices: DropdownChoice[] = []
 export const keyChoices: DropdownChoice[] = []
 
 export function UpdateActions(self: ModuleInstance): void {
-	const maxVol = 15
-	if (keySetChoices.length == 0) {
-		for (const ks of keyDef.keysetIds!) {
-			keySetChoices.push({ id: ks.id.toString(), label: ks.label })
-		}
+	console.log('**** UPDATING ACTIONS ****')
+
+	keySetChoices.length = 0 // Clear it
+	for (const ks of keyDef.keysetIds!) {
+		keySetChoices.push({ id: ks.id.toString(), label: ks.label })
 	}
+
 	if (keyChoices.length == 0) {
 		for (const id of keyFuncArray) {
 			const prettyId = `${id.charAt(0).toUpperCase()}${id.slice(1).toLowerCase()}`
@@ -55,7 +56,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				const key = keyDef.keysetIds![ksId].keys.find((k) => k.function == event.options.function)?.key
 				const msg = `{
 					"type": "MAIN_KEYSET",
-					"apiKey": "xxx",
+					"apiKey": "${self.apiKey}",
 					"keysetId": ${ksId},
 					"key": "${key}",
 					"action": "${event.options.action}"
@@ -82,7 +83,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					label: 'Volume',
 					default: 7,
 					min: 0,
-					max: maxVol,
+					max: self.maxVol,
 					range: true,
 					isVisible: (opt) => !opt.relative,
 				},
@@ -92,7 +93,7 @@ export function UpdateActions(self: ModuleInstance): void {
 					label: 'Volume',
 					default: 1,
 					min: -15,
-					max: maxVol,
+					max: self.maxVol,
 					isVisible: (opt) => !!opt.relative,
 				},
 				{
@@ -106,7 +107,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				const curVol = self.getVariableValue(`KS_${event.options.keysetId}_VOL`)
 				let vol = 0
 				if (event.options.relative) {
-					if (curVol) {
+					if (curVol !== undefined) {
 						vol = Number(curVol) + Number(event.options.volRel)
 					} else {
 						self.log('warn', 'Cannot set relative volume - have not received current volume from Station-IC.')
@@ -116,11 +117,11 @@ export function UpdateActions(self: ModuleInstance): void {
 					vol = Number(event.options.volValue)
 				}
 				if (isNaN(vol)) return
-				vol = Math.min(Math.max(vol, 0), maxVol)
+				vol = Math.min(Math.max(vol, 0), self.maxVol)
 				const ksId = keyDef.keysetIds![Number(event.options.keySet)].id
 				const msg = `{
 					"type": "KEYSET_VOLUME",
-					"apiKey": "xxx",
+					"apiKey": "${self.apiKey}",
 					"keysetId": ${ksId},
 					"volValue": ${vol}
 				}`
@@ -147,7 +148,7 @@ export function UpdateActions(self: ModuleInstance): void {
 			callback: async (event): Promise<void> => {
 				const msg = `{
 					"type": "REPLY_KEYSET",
-					"apiKey": "xxx",
+					"apiKey": "${self.apiKey}",
 					"key": "MAIN",
 					"action": "${event.options.action}"
 				}`
@@ -163,7 +164,7 @@ export function UpdateActions(self: ModuleInstance): void {
 			callback: async (): Promise<void> => {
 				const msg = `{
 					"type": "GBL_TALK",
-					"apiKey": "xxx",
+					"apiKey": "${self.apiKey}",
 					"action": "PRESS+RELEASE"
 				}`
 				const stnMsg = new StationICMessage(msg)
@@ -178,7 +179,7 @@ export function UpdateActions(self: ModuleInstance): void {
 			callback: async (): Promise<void> => {
 				const msg = `{
 					"type": "GBL_LISTEN",
-					"apiKey": "xxx",
+					"apiKey": "${self.apiKey}",
 					"action": "PRESS+RELEASE"
 				}`
 				const stnMsg = new StationICMessage(msg)
