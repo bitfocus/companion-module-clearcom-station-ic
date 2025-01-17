@@ -1,6 +1,6 @@
 import { InstanceStatus } from '@companion-module/base'
 import type { ModuleInstance } from './main.js'
-import { CreateVariable } from './variables.js'
+import { InitVariables, CreateVariable, getVolumes } from './variables.js'
 import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
 
@@ -100,10 +100,12 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			self.setVariableValues({ CONNECTION: data.status })
 			switch (data.status) {
 				case 'DISCONNECTED':
+					InitVariables(self)
 					self.updateStatus(InstanceStatus.Disconnected)
 					break
 				case 'CONNECTED':
 					self.updateStatus(InstanceStatus.Ok)
+					getVolumes(self)
 					break
 				case 'CONNECTING':
 					self.updateStatus(InstanceStatus.Connecting)
@@ -125,6 +127,7 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			}
 			UpdateActions(self)
 			UpdateFeedbacks(self)
+			getVolumes(self)
 			break
 		}
 
@@ -170,7 +173,7 @@ function keyName(id: number | undefined, key: string | undefined): string {
 	let kName = ''
 	if (id !== undefined && key !== undefined) {
 		const kData = keyDef.keysetIds![id].keys.find((k) => k.key == key)!
-		kName = kData.function || ''
+		kName = kData?.function || ''
 	}
 	return kName
 }

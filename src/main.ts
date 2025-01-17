@@ -1,6 +1,12 @@
-import { InstanceBase, runEntrypoint, InstanceStatus, SomeCompanionConfigField } from '@companion-module/base'
+import {
+	InstanceBase,
+	runEntrypoint,
+	InstanceStatus,
+	SomeCompanionConfigField,
+	CompanionVariableDefinition,
+} from '@companion-module/base'
 import { GetConfigFields, type ModuleConfig } from './config.js'
-import { UpdateVariableDefinitions, getVolumes } from './variables.js'
+import { InitVariables } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
 import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
@@ -8,6 +14,7 @@ import { ParseMessage } from './messages.js'
 
 export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	config!: ModuleConfig // Setup in init()
+	variables: CompanionVariableDefinition[] = []
 	ws!: WebSocket
 	reconnectTimer!: NodeJS.Timeout
 	maxKeySets: number = 24
@@ -22,7 +29,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		this.config = config
 		this.apiKey = this.config.apikey
 		this.initWebSocket()
-		UpdateVariableDefinitions(this) // export variable definitions
+		InitVariables(this) // export variable definitions
 		UpdateActions(this)
 		UpdateFeedbacks(this)
 	}
@@ -69,7 +76,6 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			console.log('WS Open.')
 			this.updateStatus(InstanceStatus.Ok)
 			clearTimeout(this.reconnectTimer)
-			getVolumes(this)
 		})
 
 		this.ws.addEventListener('closed', (event) => {
@@ -84,7 +90,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 				console.log('WS Received: ', JSON.stringify(JSON.parse(event.data), null, 2))
 				ParseMessage(this, event.data)
 			} catch (e) {
-				console.log('Parse Error: ', e, 'Unrecognized message: ', event.data)
+				console.log('Parse Error: ', e, '\nUnrecognized message: ', event.data)
 			}
 		})
 	}

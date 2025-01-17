@@ -6,8 +6,6 @@ export const keySetChoices: DropdownChoice[] = []
 export const keyChoices: DropdownChoice[] = []
 
 export function UpdateActions(self: ModuleInstance): void {
-	console.log('**** UPDATING ACTIONS ****')
-
 	keySetChoices.length = 0 // Clear it
 	for (const ks of keyDef.keysetIds!) {
 		keySetChoices.push({ id: ks.id.toString(), label: ks.label })
