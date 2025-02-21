@@ -1,6 +1,6 @@
 {
 	"name": "clearcom-station-ic",
-	"version": "0.2.4",
+	"version": "0.2.6",
 	"main": "dist/main.js",
 	"type": "module",
 	"scripts": {
@@ -17,24 +17,24 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/bitfocus/companion-module-your-module-name.git"
+		"url": "git+https://github.com/MeestorX/companion-module-clearcom-station-ic.git"
 	},
 	"engines": {
 		"node": "^22.4"
 	},
 	"dependencies": {
-		"@companion-module/base": "~1.11.0"
+		"@companion-module/base": "~1.11.3"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^2.1.0",
-		"@types/node": "^22.6.1",
-		"eslint": "^9.11.1",
-		"husky": "^9.1.6",
-		"lint-staged": "^15.2.10",
-		"prettier": "^3.3.3",
+		"@companion-module/tools": "^2.1.1",
+		"@types/node": "^22.13.4",
+		"eslint": "^9.20.1",
+		"husky": "^9.1.7",
+		"lint-staged": "^15.4.3",
+		"prettier": "^3.5.1",
 		"rimraf": "^6.0.1",
-		"typescript": "~5.5.4",
-		"typescript-eslint": "^8.7.0"
+		"typescript": "~5.7.3",
+		"typescript-eslint": "^8.24.1"
 	},
 	"prettier": "@companion-module/tools/.prettierrc.json",
 	"lint-staged": {

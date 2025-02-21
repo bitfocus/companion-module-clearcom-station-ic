@@ -10,6 +10,7 @@ import { InitVariables } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
 import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
+import { UpdatePresets } from './presets.js'
 import { ParseMessage } from './messages.js'
 
 export class ModuleInstance extends InstanceBase<ModuleConfig> {
@@ -32,6 +33,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		InitVariables(this) // export variable definitions
 		UpdateActions(this)
 		UpdateFeedbacks(this)
+		UpdatePresets(this)
 	}
 	// When module gets deleted
 	async destroy(): Promise<void> {
