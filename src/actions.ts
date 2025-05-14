@@ -155,6 +155,34 @@ export function UpdateActions(self: ModuleInstance): void {
 			},
 		},
 
+		reply_ctrl: {
+			name: 'Reply Control',
+			description: 'Scroll or clear the Reply Stack',
+			options: [
+				{
+					id: 'key',
+					type: 'dropdown',
+					label: 'Action',
+					choices: [
+						{ id: 'LEFT', label: 'Scroll Left' },
+						{ id: 'RIGHT', label: 'Scroll Right' },
+						{ id: 'CLEAR', label: 'Clear Reply' },
+					],
+					default: 'LEFT',
+				},
+			],
+			callback: async (event): Promise<void> => {
+				const msg = `{
+					"type": "REPLY_KEYSET",
+					"apiKey": "${self.apiKey}",
+					"key": "${event.options.key}",
+					"action": "PRESS+RELEASE"
+				}`
+				const stnMsg = new StationICMessage(msg)
+				stnMsg.send(self.ws)
+			},
+		},
+
 		global_talk: {
 			name: 'Global Talk Mute',
 			description: 'Toggle Global Talk Mute state',
