@@ -5,8 +5,10 @@ import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
 
 export type msgTypes =
+	| 'VERSION'
 	| 'CONNECTION'
-	| 'LABELS_MAPPING'
+	| 'KEYSETS_MAPPING'
+	| 'FAVS_MAPPING'
 	| 'GBL_TALK'
 	| 'GBL_LISTEN'
 	| 'REPLY_KEYSET'
@@ -21,10 +23,10 @@ interface IStationICMessage {
 	type: msgTypes
 	status?: 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED'
 	keysetId?: number
-	keysetIds?: ILabel[]
+	keysets?: ILabel[]
 	label?: string
 	key?: keyTypes
-	action?: 'PRESS+RELEASE' | 'HOLD' | 'RELEASE'
+	action?: actionTypes
 	isMuted?: boolean
 	isActive?: boolean
 	isFlashing?: boolean
@@ -53,13 +55,13 @@ export interface IKeyStatus {
 export const maxKeySets = 24
 
 function createBlankKeyDef(): IStationICMessage {
-	const ksID = []
+	const ksArr = []
 	for (let i = 0; i < maxKeySets; i++) {
-		ksID.push({ label: i.toString(), id: i, keys: [] })
+		ksArr.push({ label: i.toString(), id: i, keys: [] })
 	}
 	return {
-		type: 'LABELS_MAPPING',
-		keysetIds: ksID,
+		type: 'KEYSETS_MAPPING',
+		keysets: ksArr,
 	}
 }
 export let keyDef: IStationICMessage = createBlankKeyDef()
@@ -105,6 +107,7 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 					break
 				case 'CONNECTED':
 					self.updateStatus(InstanceStatus.Ok)
+					//getKeysets(self)
 					getVolumes(self)
 					break
 				case 'CONNECTING':
@@ -113,21 +116,13 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			break
 		}
 
-		case 'LABELS_MAPPING': {
+		case 'KEYSETS_MAPPING': {
 			keyDef = data
-			for (const lm of data.keysetIds!) {
+			for (const lm of data.keysets!) {
 				CreateVariable(self, `KS_${lm.id}_LABEL`, lm.label?.trim())
-				/*
-				for (const kn of lm.keys!) {
-					if (kn?.key && kn?.function) {
-						CreateVariable(self, `KS_${lm.id}_${kn.key}`, kn.function?.trim())
-					}
-				}
-				*/
 			}
 			UpdateActions(self)
 			UpdateFeedbacks(self)
-			getVolumes(self)
 			break
 		}
 
@@ -172,7 +167,7 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 function keyName(id: number | undefined, key: string | undefined): string {
 	let kName = ''
 	if (id !== undefined && key !== undefined) {
-		const kData = keyDef.keysetIds![id].keys.find((k) => k.key == key)!
+		const kData = keyDef.keysets![id].keys.find((k) => k.key == key)!
 		kName = kData?.function || ''
 	}
 	return kName

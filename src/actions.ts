@@ -7,7 +7,7 @@ export const keyChoices: DropdownChoice[] = []
 
 export function UpdateActions(self: ModuleInstance): void {
 	keySetChoices.length = 0 // Clear it
-	for (const ks of keyDef.keysetIds!) {
+	for (const ks of keyDef.keysets!) {
 		keySetChoices.push({ id: ks.id.toString(), label: ks.label })
 	}
 
@@ -50,8 +50,8 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: async (event): Promise<void> => {
-				const ksId = keyDef.keysetIds![Number(event.options.keySet)].id
-				const key = keyDef.keysetIds![ksId].keys.find((k) => k.function == event.options.function)?.key
+				const ksId = keyDef.keysets![Number(event.options.keySet)].id
+				const key = keyDef.keysets![ksId].keys.find((k) => k.function == event.options.function)?.key
 				const msg = `{
 					"type": "MAIN_KEYSET",
 					"apiKey": "${self.apiKey}",
@@ -116,7 +116,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				}
 				if (isNaN(vol)) return
 				vol = Math.min(Math.max(vol, 0), self.maxVol)
-				const ksId = keyDef.keysetIds![Number(event.options.keySet)].id
+				const ksId = keyDef.keysets![Number(event.options.keySet)].id
 				const msg = `{
 					"type": "KEYSET_VOLUME",
 					"apiKey": "${self.apiKey}",

@@ -40,3 +40,17 @@ export function getVolumes(self: ModuleInstance): void {
 		}
 	}
 }
+
+export function getKeysets(self: ModuleInstance): void {
+	for (let i = 0; i < self.maxKeySets; i++) {
+		if (self.getVariableValue(`KS_${i}_LABEL`) === undefined) {
+			const msg = `{
+				"type": "KEYSETS_MAPPING",
+				"apiKey": "${self.apiKey}",
+				"keysetId": ${i}
+			}`
+			const stnMsg = new StationICMessage(msg)
+			stnMsg.send(self.ws) // Request Keyset mapping
+		}
+	}
+}

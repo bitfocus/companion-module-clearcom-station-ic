@@ -2,4 +2,4 @@
 
 Companion Module for Clear-Com's Station-IC app that runs on Windows and MacOS desktops.
 
-_Andrew Broughton, Feb 2025_
+_Andrew Broughton, May 2025_

@@ -63,6 +63,8 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			this.updateStatus(InstanceStatus.Disconnected)
 		}
 
+		if (!this.config.host || !this.config.port) return
+
 		this.ws = new WebSocket(`ws://${this.config.host}:${this.config.port}`)
 
 		this.ws.addEventListener('error', (event) => {
@@ -76,7 +78,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 
 		this.ws.addEventListener('open', () => {
 			console.log('WS Open.')
-			this.updateStatus(InstanceStatus.Ok)
+			//this.updateStatus(InstanceStatus.Ok)
 			clearTimeout(this.reconnectTimer)
 		})
 
