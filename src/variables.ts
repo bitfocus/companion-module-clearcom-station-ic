@@ -1,5 +1,5 @@
 import type { ModuleInstance } from './main.js'
-import { StationICMessage } from './messages.js'
+//import { StationICMessage } from './messages.js'
 
 export function InitVariables(self: ModuleInstance): void {
 	self.variables = [
@@ -27,6 +27,7 @@ export function CreateVariable(
 	self.setVariableValues({ [varName]: data })
 }
 
+/*
 export function getVolumes(self: ModuleInstance): void {
 	for (let i = 0; i < self.maxKeySets; i++) {
 		if (self.getVariableValue(`KS_${i}_VOL`) === undefined) {
@@ -54,3 +55,4 @@ export function getKeysets(self: ModuleInstance): void {
 		}
 	}
 }
+*/

@@ -1,6 +1,6 @@
 import { InstanceStatus } from '@companion-module/base'
 import type { ModuleInstance } from './main.js'
-import { InitVariables, CreateVariable, getVolumes } from './variables.js'
+import { InitVariables, CreateVariable } from './variables.js'
 import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
 
@@ -12,6 +12,7 @@ export type msgTypes =
 	| 'GBL_TALK'
 	| 'GBL_LISTEN'
 	| 'REPLY_KEYSET'
+	| 'KEYSETS_VOLUME'
 	| 'KEYSET_VOLUME'
 	| 'MAIN_KEYSET'
 export type actionTypes = 'PRESS+RELEASE' | 'HOLD' | 'RELEASE'
@@ -23,7 +24,9 @@ interface IStationICMessage {
 	type: msgTypes
 	status?: 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED'
 	keysetId?: number
-	keysets?: ILabel[]
+	keysets?: IKeyset[]
+	favs?: IFav[]
+	volumes?: IVolume[]
 	label?: string
 	key?: keyTypes
 	action?: actionTypes
@@ -34,15 +37,30 @@ interface IStationICMessage {
 	currentVolume?: number
 }
 
-interface ILabel {
+interface IKeyset {
 	label: string
 	id: number
 	keys: IKeyMap[]
 }
 
+interface IVolume {
+	type: msgTypes
+	keysetId: number
+	currentVolume: number
+}
+
 interface IKeyMap {
 	key: keyTypes
 	function: keyFunctions
+}
+
+interface IFav {
+	favId: number
+	keysetId: number
+	gKey: number
+	label: string
+	talkMode: number
+	listenMode: number
 }
 
 export interface IKeyStatus {
@@ -53,6 +71,7 @@ export interface IKeyStatus {
 }
 
 export const maxKeySets = 24
+export const maxFavs = 6
 
 function createBlankKeyDef(): IStationICMessage {
 	const ksArr = []
@@ -69,6 +88,7 @@ export const keyFuncArray: keyFunctions[] = ['TALK', 'LISTEN', 'CALL', 'RMK', 'E
 export const globalStatus: Map<msgTypes, IKeyStatus> = new Map()
 export const keyVolume: Map<number, number> = new Map()
 export const keyStatus: Map<number, Map<keyTypes, IKeyStatus>> = new Map()
+export let favsArray: IFav[] = []
 
 export class StationICMessage {
 	data: IStationICMessage = { type: 'CONNECTION' }
@@ -108,7 +128,7 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 				case 'CONNECTED':
 					self.updateStatus(InstanceStatus.Ok)
 					//getKeysets(self)
-					getVolumes(self)
+					//getVolumes(self)
 					break
 				case 'CONNECTING':
 					self.updateStatus(InstanceStatus.Connecting)
@@ -118,9 +138,21 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 
 		case 'KEYSETS_MAPPING': {
 			keyDef = data
-			for (const lm of data.keysets!) {
-				CreateVariable(self, `KS_${lm.id}_LABEL`, lm.label?.trim())
+			for (const ks of data.keysets!) {
+				if (ks.label !== '') CreateVariable(self, `KS_${ks.id}_LABEL`, ks.label?.trim())
 			}
+			UpdateActions(self)
+			UpdateFeedbacks(self)
+			break
+		}
+
+		case 'FAVS_MAPPING': {
+			self.variables = self.variables.filter((v) => !v.variableId.startsWith('FAV_'))
+			self.setVariableDefinitions(self.variables)
+			favsArray = data.favs!
+			favsArray.map((f) => {
+				CreateVariable(self, `FAV_${f.favId}_LABEL`, keyDef.keysets![f.keysetId].label?.trim())
+			})
 			UpdateActions(self)
 			UpdateFeedbacks(self)
 			break
@@ -143,6 +175,15 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			break
 		}
 
+		case 'KEYSETS_VOLUME': {
+			for (const v of data.volumes!) {
+				keyVolume.set(v.keysetId, v.currentVolume)
+				const kLabel = keyDef.keysets![v.keysetId].label
+				if (kLabel !== '') CreateVariable(self, `KS_${v.keysetId}_VOL`, v.currentVolume)
+			}
+			break
+		}
+
 		case 'KEYSET_VOLUME': {
 			keyVolume.set(data.keysetId!, data.currentVolume!)
 			CreateVariable(self, `KS_${data.keysetId}_VOL`, data.currentVolume)
@@ -153,10 +194,10 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			const keyData = keyStatus.get(data.keysetId!) || new Map<keyTypes, IKeyStatus>()
 			keyData?.set(data.key!, { isActive: data.isActive!, isFlashing: data.isFlashing! })
 			keyStatus.set(data.keysetId!, keyData)
-			const kName = keyName(data.keysetId, data.key)
-			if (kName !== '') {
-				CreateVariable(self, `KS_${data.keysetId}_${kName}_ACTIVE`, data.isActive)
-				CreateVariable(self, `KS_${data.keysetId}_${kName}_FLASHING`, data.isFlashing)
+			const kFunction = keyFunction(data.keysetId, data.key)
+			if (kFunction !== '') {
+				CreateVariable(self, `KS_${data.keysetId}_${kFunction}_ACTIVE`, data.isActive)
+				CreateVariable(self, `KS_${data.keysetId}_${kFunction}_FLASHING`, data.isFlashing)
 				self.checkFeedbacks('button_state')
 			}
 			break
@@ -164,7 +205,7 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 	}
 }
 
-function keyName(id: number | undefined, key: string | undefined): string {
+function keyFunction(id: number | undefined, key: string | undefined): string {
 	let kName = ''
 	if (id !== undefined && key !== undefined) {
 		const kData = keyDef.keysets![id].keys.find((k) => k.key == key)!

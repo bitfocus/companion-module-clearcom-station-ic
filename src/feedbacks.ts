@@ -38,7 +38,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			defaultStyle: { bgcolor: combineRgb(255, 0, 0), color: combineRgb(255, 255, 255) },
 			callback: async (event: CompanionFeedbackInfo): Promise<boolean> => {
 				let status = false
-				const ksId = keyDef.keysets![Number(event.options.keySet)].id
+				const ksId = keyDef.keysets![Number(event.options.keySet) % 100].id
 				const key = keyDef.keysets![ksId].keys.find((k) => k.function == event.options.function)?.key
 				const ks = keyStatus.get(ksId)?.get(key!)
 				if (event.options.state == 'ACTIVE') {

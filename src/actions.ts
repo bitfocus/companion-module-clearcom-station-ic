@@ -1,5 +1,5 @@
 import type { ModuleInstance } from './main.js'
-import { StationICMessage, keyDef, keyFuncArray } from './messages.js'
+import { StationICMessage, keyDef, keyFuncArray, favsArray } from './messages.js'
 import { DropdownChoice } from '@companion-module/base'
 
 export const keySetChoices: DropdownChoice[] = []
@@ -8,7 +8,11 @@ export const keyChoices: DropdownChoice[] = []
 export function UpdateActions(self: ModuleInstance): void {
 	keySetChoices.length = 0 // Clear it
 	for (const ks of keyDef.keysets!) {
-		keySetChoices.push({ id: ks.id.toString(), label: ks.label })
+		if (ks.label !== '') keySetChoices.push({ id: ks.id, label: ks.label })
+	}
+
+	for (const f of favsArray) {
+		keySetChoices.push({ id: f.keysetId + 100, label: `FAV${f.favId}` })
 	}
 
 	if (keyChoices.length == 0) {
@@ -50,7 +54,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: async (event): Promise<void> => {
-				const ksId = keyDef.keysets![Number(event.options.keySet)].id
+				const ksId = keyDef.keysets![Number(event.options.keySet) % 100].id
 				const key = keyDef.keysets![ksId].keys.find((k) => k.function == event.options.function)?.key
 				const msg = `{
 					"type": "MAIN_KEYSET",
