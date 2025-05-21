@@ -13,6 +13,21 @@ import { UpdateFeedbacks } from './feedbacks.js'
 import { UpdatePresets } from './presets.js'
 import { ParseMessage } from './messages.js'
 
+export function readyStateStr(rs: number): string {
+	switch (rs) {
+		case 0:
+			return 'CONNECTING'
+		case 1:
+			return 'OPEN'
+		case 2:
+			return 'CLOSING'
+		case 3:
+			return 'CLOSED'
+		default:
+			return 'UNKNOWN'
+	}
+}
+
 export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	config!: ModuleConfig // Setup in init()
 	variables: CompanionVariableDefinition[] = []
@@ -38,7 +53,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	// When module gets deleted
 	async destroy(): Promise<void> {
 		if (this.ws) {
-			console.log('Destroying WS.\nWS readyState= ', this.ws.readyState)
+			console.log('Destroying WS.\nWS readyState= ', readyStateStr(this.ws.readyState))
 			if (this.ws.readyState != WebSocket.CLOSED) {
 				this.ws.close()
 			}
@@ -78,12 +93,11 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 
 		this.ws.addEventListener('open', () => {
 			console.log('WS Open.')
-			//this.updateStatus(InstanceStatus.Ok)
 			clearTimeout(this.reconnectTimer)
 		})
 
-		this.ws.addEventListener('closed', (event) => {
-			console.log('WS Closed. Msg: ', event)
+		this.ws.addEventListener('close', () => {
+			console.log('WS Closed.')
 			this.updateStatus(InstanceStatus.Disconnected)
 			clearTimeout(this.reconnectTimer)
 			this.reconnectTimer = setTimeout(() => this.initWebSocket(), 1000)

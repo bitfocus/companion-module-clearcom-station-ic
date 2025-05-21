@@ -22,6 +22,7 @@ export type keyFunctions = 'TALK' | 'LISTEN' | 'CALL' | 'RMK' | 'EVENT1' | 'EVEN
 interface IStationICMessage {
 	apiKey?: string
 	type: msgTypes
+	version?: string
 	status?: 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED'
 	keysetId?: number
 	keysets?: IKeyset[]
@@ -118,17 +119,25 @@ export class StationICMessage {
 export function ParseMessage(self: ModuleInstance, msg: string): void {
 	const data = new StationICMessage(msg).data
 	switch (data.type) {
+		case 'VERSION': {
+			self.setVariableValues({ VERSION: data.version })
+			let msg = new StationICMessage(`{"type": "CONNECTION", "apiKey": "${self.apiKey}"}`)
+			msg.send(self.ws)
+			msg = new StationICMessage('{"type": "CONNECTION"}')
+			msg.send(self.ws)
+			break
+		}
+
 		case 'CONNECTION': {
 			self.setVariableValues({ CONNECTION: data.status })
 			switch (data.status) {
 				case 'DISCONNECTED':
 					InitVariables(self)
 					self.updateStatus(InstanceStatus.Disconnected)
+					self.ws?.close(1000)
 					break
 				case 'CONNECTED':
 					self.updateStatus(InstanceStatus.Ok)
-					//getKeysets(self)
-					//getVolumes(self)
 					break
 				case 'CONNECTING':
 					self.updateStatus(InstanceStatus.Connecting)

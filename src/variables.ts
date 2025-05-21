@@ -3,6 +3,7 @@ import type { ModuleInstance } from './main.js'
 
 export function InitVariables(self: ModuleInstance): void {
 	self.variables = [
+		{ variableId: 'VERSION', name: 'Station-IC API Version' },
 		{ variableId: 'CONNECTION', name: 'Connection Status' },
 		{ variableId: 'RK_LABEL', name: 'Reply Key Label' },
 	]
@@ -11,7 +12,7 @@ export function InitVariables(self: ModuleInstance): void {
 
 export function UpdateVariableDefinitions(self: ModuleInstance): void {
 	self.setVariableDefinitions(self.variables)
-	//self.setVariableValues({ CONNECTION: 'DISCONNECTED' })
+	self.setVariableValues({ VERSION: '' })
 }
 
 export function CreateVariable(

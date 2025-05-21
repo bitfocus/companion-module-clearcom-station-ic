@@ -12,7 +12,7 @@ export function UpdateActions(self: ModuleInstance): void {
 	}
 
 	for (const f of favsArray) {
-		keySetChoices.push({ id: f.keysetId + 100, label: `FAV${f.favId}` })
+		keySetChoices.push({ id: `FAV${f.favId}`, label: `FAV${f.favId}` })
 	}
 
 	if (keyChoices.length == 0) {
@@ -54,7 +54,16 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: async (event): Promise<void> => {
-				const ksId = keyDef.keysets![Number(event.options.keySet) % 100].id
+				let ksId = -1
+				if (event.options.keySet?.toString().startsWith('FAV')) {
+					const favId = Number(event.options.keySet?.toString().replace('FAV', ''))
+					if (favId > favsArray.length) {
+						return
+					}
+					ksId = favsArray[favId - 1].keysetId
+				} else {
+					ksId = keyDef.keysets![Number(event.options.keySet)].id
+				}
 				const key = keyDef.keysets![ksId].keys.find((k) => k.function == event.options.function)?.key
 				const msg = `{
 					"type": "MAIN_KEYSET",
