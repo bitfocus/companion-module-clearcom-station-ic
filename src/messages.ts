@@ -16,7 +16,15 @@ export type msgTypes =
 	| 'KEYSET_VOLUME'
 	| 'MAIN_KEYSET'
 export type actionTypes = 'PRESS+RELEASE' | 'HOLD' | 'RELEASE'
-export type keyTypes = 'MAIN' | 'CLEAR' | 'PRIMARY_RIGHT' | 'PRIMARY_LEFT' | 'SECONDARY_RIGHT' | 'SECONDARY_LEFT'
+export type keyTypes =
+	| 'MAIN'
+	| 'CLEAR'
+	| 'LEFT'
+	| 'RIGHT'
+	| 'PRIMARY_RIGHT'
+	| 'PRIMARY_LEFT'
+	| 'SECONDARY_RIGHT'
+	| 'SECONDARY_LEFT'
 export type keyFunctions = 'TALK' | 'LISTEN' | 'CALL' | 'RMK' | 'EVENT1' | 'EVENT2'
 
 interface IStationICMessage {
@@ -86,7 +94,7 @@ function createBlankKeyDef(): IStationICMessage {
 }
 export let keyDef: IStationICMessage = createBlankKeyDef()
 export const keyFuncArray: keyFunctions[] = ['TALK', 'LISTEN', 'CALL', 'RMK', 'EVENT1', 'EVENT2']
-export const globalStatus: Map<msgTypes, IKeyStatus> = new Map()
+export const globalStatus: Map<msgTypes, Map<keyTypes, IKeyStatus>> = new Map()
 export const keyVolume: Map<number, number> = new Map()
 export const keyStatus: Map<number, Map<keyTypes, IKeyStatus>> = new Map()
 export let favsArray: IFav[] = []
@@ -168,17 +176,27 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 		}
 
 		case 'REPLY_KEYSET': {
-			globalStatus.set(data.type, { label: data.label, isActive: data.isActive!, isFlashing: data.isFlashing })
+			if (!globalStatus.has(data.type)) {
+				globalStatus.set(data.type, new Map())
+			}
+			const globalKey = globalStatus.get(data.type)!
+			globalKey.set(data.key!, { label: data.label, isActive: data.isActive, isFlashing: data.isFlashing })
+			globalStatus.set(data.type, globalKey)
 			CreateVariable(self, `RK_ACTIVE`, data.isActive)
 			CreateVariable(self, `RK_FLASHING`, data.isFlashing)
-			CreateVariable(self, `RK_LABEL`, data.label)
+			if (data.key == 'MAIN') CreateVariable(self, `RK_LABEL`, data.label)
 			self.checkFeedbacks('reply_state')
 			break
 		}
 
 		case 'GBL_TALK':
 		case 'GBL_LISTEN': {
-			globalStatus.set(data.type, { muted: data.isMuted! })
+			if (!globalStatus.has(data.type)) {
+				globalStatus.set(data.type, new Map())
+			}
+			const globalKey = globalStatus.get(data.type)!
+			globalKey.set('MAIN', { muted: data.isMuted })
+			globalStatus.set(data.type, globalKey)
 			CreateVariable(self, `${data.type}_MUTED`, data.isMuted)
 			self.checkFeedbacks('global_state')
 			break
