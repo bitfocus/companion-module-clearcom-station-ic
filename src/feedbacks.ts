@@ -1,6 +1,6 @@
 import { combineRgb, CompanionFeedbackInfo } from '@companion-module/base'
 import type { ModuleInstance } from './main.js'
-import { keyDef, msgTypes, globalStatus, keyStatus, IKeyStatus } from './messages.js'
+import { keyDef, msgTypes, globalStatus, keyStatus, keyTypes, favsArray } from './messages.js'
 import { keySetChoices, keyChoices } from './actions.js'
 
 export function UpdateFeedbacks(self: ModuleInstance): void {
@@ -38,7 +38,18 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			defaultStyle: { bgcolor: combineRgb(255, 0, 0), color: combineRgb(255, 255, 255) },
 			callback: async (event: CompanionFeedbackInfo): Promise<boolean> => {
 				let status = false
-				const ksId = keyDef.keysets![Number(event.options.keySet) % 100].id
+				let ksId = -1
+				if (event.options.keySet?.toString().startsWith('FAV')) {
+					const favId = Number(event.options.keySet?.toString().replace('FAV', ''))
+					if (favId > favsArray.length) {
+						return false
+					}
+					ksId = favsArray[favId - 1].keysetId
+				} else if (Number(event.options.keySet) < keyDef.keysets!.length) {
+					ksId = keyDef.keysets![Number(event.options.keySet)].id
+				} else {
+					return false
+				}
 				const key = keyDef.keysets![ksId].keys.find((k) => k.function == event.options.function)?.key
 				const ks = keyStatus.get(ksId)?.get(key!)
 				if (event.options.state == 'ACTIVE') {
@@ -56,6 +67,17 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			type: 'boolean',
 			options: [
 				{
+					id: 'key',
+					type: 'dropdown',
+					label: 'Key',
+					choices: [
+						{ id: 'MAIN', label: 'Main' },
+						{ id: 'LEFT', label: 'Left' },
+						{ id: 'RIGHT', label: 'Right' },
+					],
+					default: 'MAIN',
+				},
+				{
 					id: 'state',
 					type: 'dropdown',
 					label: 'State',
@@ -68,8 +90,12 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			],
 			defaultStyle: { bgcolor: combineRgb(255, 0, 0), color: combineRgb(255, 255, 255) },
 			callback: async (event: CompanionFeedbackInfo): Promise<boolean> => {
-				const replyState: IKeyStatus = globalStatus.get('REPLY_KEYSET')!
 				let status = false
+				const replyKey = globalStatus.get('REPLY_KEYSET')
+				const replyState = replyKey?.get(event.options.key as keyTypes)
+				if (!replyState) {
+					return false
+				}
 				if (event.options.state == 'ACTIVE') {
 					status = !!replyState?.isActive
 				} else {
@@ -98,7 +124,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			defaultStyle: { bgcolor: combineRgb(255, 0, 0), color: combineRgb(255, 255, 255) },
 			callback: async (event: CompanionFeedbackInfo): Promise<boolean> => {
 				const globalFunction = `GBL_${event.options.function}` as msgTypes
-				const globalState = globalStatus.get(globalFunction)?.muted
+				const globalState = globalStatus.get(globalFunction)?.get('MAIN')!.muted
 				return !!globalState
 			},
 		},
