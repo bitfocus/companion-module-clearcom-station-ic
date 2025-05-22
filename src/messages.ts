@@ -129,10 +129,6 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 	switch (data.type) {
 		case 'VERSION': {
 			self.setVariableValues({ VERSION: data.version })
-			let msg = new StationICMessage(`{"type": "CONNECTION", "apiKey": "${self.apiKey}"}`)
-			msg.send(self.ws)
-			msg = new StationICMessage('{"type": "CONNECTION"}')
-			msg.send(self.ws)
 			break
 		}
 
