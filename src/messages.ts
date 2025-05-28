@@ -152,7 +152,8 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 		case 'KEYSETS_MAPPING': {
 			keyDef = data
 			for (const ks of data.keysets!) {
-				if (ks.label !== '') CreateVariable(self, `KS_${ks.id}_LABEL`, ks.label?.trim())
+				if (ks.label !== '')
+					CreateVariable(self, `KS_${ks.id + 1}_LABEL`, `Keyset #${ks.id + 1} Label`, ks.label?.trim())
 			}
 			UpdateActions(self)
 			UpdateFeedbacks(self)
@@ -164,7 +165,12 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			self.setVariableDefinitions(self.variables)
 			favsArray = data.favs!
 			favsArray.map((f) => {
-				CreateVariable(self, `FAV_${f.favId}_LABEL`, keyDef.keysets![f.keysetId].label?.trim())
+				CreateVariable(
+					self,
+					`FAV_${f.favId}_LABEL`,
+					`Favourite #${f.favId} Label`,
+					keyDef.keysets![f.keysetId].label?.trim(),
+				)
 			})
 			UpdateActions(self)
 			UpdateFeedbacks(self)
@@ -178,9 +184,9 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			const globalKey = globalStatus.get(data.type)!
 			globalKey.set(data.key!, { label: data.label, isActive: data.isActive, isFlashing: data.isFlashing })
 			globalStatus.set(data.type, globalKey)
-			CreateVariable(self, `RK_ACTIVE`, data.isActive)
-			CreateVariable(self, `RK_FLASHING`, data.isFlashing)
-			if (data.key == 'MAIN') CreateVariable(self, `RK_LABEL`, data.label)
+			CreateVariable(self, `RK_ACTIVE`, `Reply Key Active?`, data.isActive)
+			CreateVariable(self, `RK_FLASHING`, `Reply Key Flashing?`, data.isFlashing)
+			if (data.key == 'MAIN') CreateVariable(self, `RK_LABEL`, `Reply Key Label`, data.label)
 			self.checkFeedbacks('reply_state')
 			break
 		}
@@ -193,7 +199,12 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			const globalKey = globalStatus.get(data.type)!
 			globalKey.set('MAIN', { muted: data.isMuted })
 			globalStatus.set(data.type, globalKey)
-			CreateVariable(self, `${data.type}_MUTED`, data.isMuted)
+			CreateVariable(
+				self,
+				`${data.type}_MUTED`,
+				`${data.type == 'GBL_TALK' ? 'Global Talk' : 'Global Listen'} Muted?`,
+				data.isMuted,
+			)
 			self.checkFeedbacks('global_state')
 			break
 		}
@@ -202,14 +213,15 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			for (const v of data.volumes!) {
 				keyVolume.set(v.keysetId, v.currentVolume)
 				const kLabel = keyDef.keysets![v.keysetId].label
-				if (kLabel !== '') CreateVariable(self, `KS_${v.keysetId}_VOL`, v.currentVolume)
+				if (kLabel !== '')
+					CreateVariable(self, `KS_${v.keysetId + 1}_VOL`, `Keyset #${v.keysetId + 1} Volume`, v.currentVolume)
 			}
 			break
 		}
 
 		case 'KEYSET_VOLUME': {
 			keyVolume.set(data.keysetId!, data.currentVolume!)
-			CreateVariable(self, `KS_${data.keysetId}_VOL`, data.currentVolume)
+			CreateVariable(self, `KS_${data.keysetId! + 1}_VOL`, `Keyset #${data.keysetId! + 1} Volume`, data.currentVolume)
 			break
 		}
 
@@ -219,8 +231,18 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			keyStatus.set(data.keysetId!, keyData)
 			const kFunction = keyFunction(data.keysetId, data.key)
 			if (kFunction !== '') {
-				CreateVariable(self, `KS_${data.keysetId}_${kFunction}_ACTIVE`, data.isActive)
-				CreateVariable(self, `KS_${data.keysetId}_${kFunction}_FLASHING`, data.isFlashing)
+				CreateVariable(
+					self,
+					`KS_${data.keysetId! + 1}_${kFunction}_ACTIVE`,
+					`Keyset #${data.keysetId! + 1} Active?`,
+					data.isActive,
+				)
+				CreateVariable(
+					self,
+					`KS_${data.keysetId! + 1}_${kFunction}_FLASHING`,
+					`Keyset #${data.keysetId! + 1} Flashing?`,
+					data.isFlashing,
+				)
 				self.checkFeedbacks('button_state')
 			}
 			break

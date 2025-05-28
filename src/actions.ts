@@ -115,7 +115,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: async (event): Promise<void> => {
-				const curVol = self.getVariableValue(`KS_${event.options.keySet}_VOL`)
+				const curVol = self.getVariableValue(`KS_${Number(event.options.keySet) + 1}_VOL`)
 				let vol = 0
 				if (event.options.relative) {
 					if (curVol !== undefined) {

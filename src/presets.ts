@@ -124,6 +124,47 @@ export function UpdatePresets(self: ModuleInstance): void {
 			],
 		},
 
+		call_key: {
+			type: 'button',
+			category: 'Keys',
+			name: `CALL Key`,
+			style: {
+				text: `CALL`,
+				size: '18',
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'key_press',
+							options: {
+								keySet: 0,
+								function: 'CALL',
+								action: 'PRESS+RELEASE',
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [
+				{
+					feedbackId: 'button_state',
+					options: {
+						keySet: 0,
+						function: 'CALL',
+						state: 'ACTIVE',
+					},
+					style: {
+						color: combineRgb(255, 255, 255),
+						bgcolor: combineRgb(255, 0, 0),
+					},
+				},
+			],
+		},
+
 		reply_key: {
 			type: 'button',
 			category: 'Keys',
@@ -177,6 +218,104 @@ export function UpdatePresets(self: ModuleInstance): void {
 					},
 				},
 			],
+		},
+
+		key_volume: {
+			type: 'button',
+			category: 'Volume',
+			name: `Volume Rotary`,
+			options: {
+				rotaryActions: true,
+			},
+			style: {
+				text: `$(${self.label}:KS_1_VOL)`,
+				size: 'auto',
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
+			},
+			steps: [
+				{
+					down: [],
+					up: [],
+					rotate_left: [
+						{
+							actionId: 'keyset_volume',
+							options: {
+								keySet: 0,
+								volRel: -1,
+								relative: true,
+							},
+						},
+					],
+					rotate_right: [
+						{
+							actionId: 'keyset_volume',
+							options: {
+								keySet: 0,
+								volRel: 1,
+								relative: true,
+							},
+						},
+					],
+				},
+			],
+			feedbacks: [],
+		},
+
+		key_volUp: {
+			type: 'button',
+			category: 'Volume',
+			name: `Volume +`,
+			style: {
+				text: `$(${self.label}:KS_1_LABEL)\nVOL+`,
+				size: 'auto',
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'keyset_volume',
+							options: {
+								keySet: 0,
+								volRel: 1,
+								relative: true,
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		},
+
+		key_volDn: {
+			type: 'button',
+			category: 'Volume',
+			name: `Volume -`,
+			style: {
+				text: `$(${self.label}:KS_1_LABEL)\nVOL-`,
+				size: 'auto',
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'keyset_volume',
+							options: {
+								keySet: 0,
+								volRel: -1,
+								relative: true,
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [],
 		},
 	})
 }

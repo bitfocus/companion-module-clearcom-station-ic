@@ -18,10 +18,11 @@ export function UpdateVariableDefinitions(self: ModuleInstance): void {
 export function CreateVariable(
 	self: ModuleInstance,
 	varName: string,
+	varDesc: string = 'Auto-Created Variable',
 	data: number | string | boolean | undefined,
 ): void {
 	// Add new Auto-created variable and value
-	const varToAdd = { variableId: varName, name: 'Auto-Created Variable' }
+	const varToAdd = { variableId: varName, name: varDesc }
 	const curVarVal = self.getVariableValue(varName)
 	if (curVarVal === undefined) self.variables.push(varToAdd) // if Variable doesn't exist, add it
 	self.setVariableDefinitions(self.variables)
@@ -31,7 +32,7 @@ export function CreateVariable(
 /*
 export function getVolumes(self: ModuleInstance): void {
 	for (let i = 0; i < self.maxKeySets; i++) {
-		if (self.getVariableValue(`KS_${i}_VOL`) === undefined) {
+		if (self.getVariableValue(`KS_${i + 1}_VOL`) === undefined) {
 			const msg = `{
 				"type": "KEYSET_VOLUME",
 				"apiKey": "${self.apiKey}",
@@ -45,7 +46,7 @@ export function getVolumes(self: ModuleInstance): void {
 
 export function getKeysets(self: ModuleInstance): void {
 	for (let i = 0; i < self.maxKeySets; i++) {
-		if (self.getVariableValue(`KS_${i}_LABEL`) === undefined) {
+		if (self.getVariableValue(`KS_${i + 1}_LABEL`) === undefined) {
 			const msg = `{
 				"type": "KEYSETS_MAPPING",
 				"apiKey": "${self.apiKey}",
