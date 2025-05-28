@@ -115,7 +115,17 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: async (event): Promise<void> => {
-				const curVol = self.getVariableValue(`KS_${Number(event.options.keySet) + 1}_VOL`)
+				let ksId = -1
+				if (event.options.keySet?.toString().startsWith('FAV')) {
+					const favId = Number(event.options.keySet?.toString().replace('FAV', ''))
+					if (favId > favsArray.length) {
+						return
+					}
+					ksId = favsArray[favId - 1].keysetId
+				} else {
+					ksId = keyDef.keysets![Number(event.options.keySet)].id
+				}
+				const curVol = self.getVariableValue(`KS_${ksId + 1}_VOL`)
 				let vol = 0
 				if (event.options.relative) {
 					if (curVol !== undefined) {
@@ -129,7 +139,6 @@ export function UpdateActions(self: ModuleInstance): void {
 				}
 				if (isNaN(vol)) return
 				vol = Math.min(Math.max(vol, 0), self.maxVol)
-				const ksId = keyDef.keysets![Number(event.options.keySet)].id
 				const msg = `{
 					"type": "KEYSET_VOLUME",
 					"apiKey": "${self.apiKey}",
