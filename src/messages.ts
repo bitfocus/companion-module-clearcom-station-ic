@@ -14,6 +14,7 @@ export type msgTypes =
 	| 'REPLY_KEYSET'
 	| 'KEYSETS_VOLUME'
 	| 'KEYSET_VOLUME'
+	| 'MAIN_KEYSETS'
 	| 'MAIN_KEYSET'
 export type actionTypes = 'PRESS+RELEASE' | 'HOLD' | 'RELEASE'
 export type keyTypes =
@@ -32,6 +33,7 @@ interface IStationICMessage {
 	type: msgTypes
 	version?: string
 	status?: 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED'
+	statuses?: IStatuses[]
 	keysetId?: number
 	keysets?: IKeyset[]
 	favs?: IFav[]
@@ -44,6 +46,14 @@ interface IStationICMessage {
 	isFlashing?: boolean
 	volValue?: number
 	currentVolume?: number
+}
+
+interface IStatuses {
+	type: msgTypes
+	keysetId: number
+	key: keyTypes
+	isActive: boolean
+	isFlashing: boolean
 }
 
 interface IKeyset {
@@ -174,6 +184,7 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			})
 			UpdateActions(self)
 			UpdateFeedbacks(self)
+			self.checkFeedbacks('button_state')
 			break
 		}
 
@@ -225,28 +236,44 @@ export function ParseMessage(self: ModuleInstance, msg: string): void {
 			break
 		}
 
-		case 'MAIN_KEYSET': {
-			const keyData = keyStatus.get(data.keysetId!) || new Map<keyTypes, IKeyStatus>()
-			keyData?.set(data.key!, { isActive: data.isActive!, isFlashing: data.isFlashing! })
-			keyStatus.set(data.keysetId!, keyData)
-			const kFunction = keyFunction(data.keysetId, data.key)
-			if (kFunction !== '') {
-				CreateVariable(
-					self,
-					`KS_${data.keysetId! + 1}_${kFunction}_ACTIVE`,
-					`Keyset #${data.keysetId! + 1} Active?`,
-					data.isActive,
-				)
-				CreateVariable(
-					self,
-					`KS_${data.keysetId! + 1}_${kFunction}_FLASHING`,
-					`Keyset #${data.keysetId! + 1} Flashing?`,
-					data.isFlashing,
-				)
-				self.checkFeedbacks('button_state')
+		case 'MAIN_KEYSETS': {
+			let checkFb = false
+			for (const k of data.statuses!) {
+				if (updateKeyData(k)) {
+					checkFb = true
+				}
 			}
+			if (checkFb) self.checkFeedbacks('button_state')
 			break
 		}
+
+		case 'MAIN_KEYSET': {
+			if (updateKeyData(data)) self.checkFeedbacks('button_state')
+			break
+		}
+	}
+
+	function updateKeyData(data: IStationICMessage): boolean {
+		const keyData = keyStatus.get(data.keysetId!) || new Map<keyTypes, IKeyStatus>()
+		keyData?.set(data.key!, { isActive: data.isActive!, isFlashing: data.isFlashing! })
+		keyStatus.set(data.keysetId!, keyData)
+		const kFunction = keyFunction(data.keysetId, data.key)
+		if (kFunction !== '') {
+			CreateVariable(
+				self,
+				`KS_${data.keysetId! + 1}_${kFunction}_ACTIVE`,
+				`Keyset #${data.keysetId! + 1} Active?`,
+				data.isActive,
+			)
+			CreateVariable(
+				self,
+				`KS_${data.keysetId! + 1}_${kFunction}_FLASHING`,
+				`Keyset #${data.keysetId! + 1} Flashing?`,
+				data.isFlashing,
+			)
+			return true
+		}
+		return false
 	}
 }
 
