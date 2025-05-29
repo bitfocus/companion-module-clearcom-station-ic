@@ -1,6 +1,6 @@
 {
 	"name": "clearcom-station-ic",
-	"version": "0.3.7",
+	"version": "0.3.8",
 	"main": "dist/main.js",
 	"type": "module",
 	"scripts": {

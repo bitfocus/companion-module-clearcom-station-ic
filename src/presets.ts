@@ -199,6 +199,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 				{
 					feedbackId: 'reply_state',
 					options: {
+						key: 'MAIN',
 						state: 'FLASHING',
 					},
 					style: {
@@ -210,6 +211,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 				{
 					feedbackId: 'reply_state',
 					options: {
+						key: 'MAIN',
 						state: 'ACTIVE',
 					},
 					style: {
