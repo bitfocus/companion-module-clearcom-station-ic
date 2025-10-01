@@ -1,6 +1,6 @@
 {
-	"name": "clearcom-station-ic",
-	"version": "1.0.0",
+	"name": "companion-module-clearcom-station-ic",
+	"version": "1.0.1",
 	"main": "dist/main.js",
 	"type": "module",
 	"scripts": {
@@ -17,7 +17,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/MeestorX/companion-module-clearcom-station-ic.git"
+		"url": "git+https://github.com/bitfocus/companion-module-clearcom-station-ic.git"
 	},
 	"engines": {
 		"node": "^22.4"
