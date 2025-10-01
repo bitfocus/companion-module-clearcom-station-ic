@@ -2,7 +2,7 @@
 
 #### A Companion Module for Clear-Com's Station-IC virtual client for Windows and MacOS computers (Station-IC version 1.6 and higher)
 
-#### v1.0.1
+#### v1.0.2
 
 Station-IC connects to capable Eclipse-HX, LQ, or Gen-IC intercom systems. This Companion Module provides ability to operate Station-IC keysets, favourite keys, reply key, and global mutes and provides names and states of all options.
 
