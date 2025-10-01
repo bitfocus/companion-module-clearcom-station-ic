@@ -1,5 +1,5 @@
 {
-	"id": "companion-module-clearcom-station-ic",
+	"id": "bitfocus/companion-module-clearcom-station-ic",
 	"name": "companion-module-clearcom-station-ic",
 	"shortname": "CC Station-IC",
 	"description": "A module to control Clear-Com's Station-IC application",
