@@ -1,6 +1,6 @@
 {
-	"id": "companion-module-clearcom-station-ic",
-	"name": "companion-module-clearcom-station-ic",
+	"id": "clearcom-station-ic",
+	"name": "clearcom-station-ic",
 	"shortname": "CC Station-IC",
 	"description": "A module to control Clear-Com's Staion-IC application",
 	"version": "1.0.0",
